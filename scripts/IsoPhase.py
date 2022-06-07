@@ -220,10 +220,10 @@ def Tagging_BAM_2():
 
 
 def summary():
-	#Summarizing IsoPhase output
-	#subprocess.call("cd ..", shell = True)
-	#subprocess.call("cd ..", shell = True)
-
+	#Get one folder back
+	os.chdir('..')
+	os.chdir('..')
+	
 	#Current working directory
 	current_path = os.path.abspath(os.getcwd())
 	print(current_path)
@@ -237,6 +237,12 @@ def summary():
 	time.sleep(2)
 
 	#Collect all the VCFs from each separate directory into a single file
+	
+	#Current working directory
+	current_path = os.path.abspath(os.getcwd())
+	print(current_path)
+	time.sleep(2)
+	
 	print("***collect all the VCFs from each separate directory into a single file...***")
 	time.sleep(2)
 	collect = "python3 /opt/cDNA_Cupcake/cDNA_Cupcake/phasing/utils/collect_all_vcf.py"
@@ -282,7 +288,7 @@ while True:
 		Selecting_gene_loci()
 		
 		while True:
-			answer = input("Do you have more loci to analyze? (yes/no):")
+			answer = input("Do you have loci to analyze? (yes/no):")
 			if answer.lower().startswith("n"):
 				summary()
 				print("***The running has been completed...***")
@@ -298,7 +304,7 @@ read_stat()
 Selecting_gene_loci()
 
 while True:
-	answer = input("Do you have more loci to analyze? (yes/no):")
+	answer = input("Do you have loci to analyze? (yes/no):")
 	if answer.lower().startswith("n"):
 		summary()
 		print("***The running has been completed...***")
