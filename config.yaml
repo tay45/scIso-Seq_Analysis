@@ -1,0 +1,55 @@
+# Chained Jobs
+chain_jobs: no  # yes if you have chained jobs
+
+# Define sample folders to be chained
+samples:
+  - name: sample1
+    path: /path/to/sample1/collapsed
+  - name: sample2
+    path: /path/to/sample1/collapsed
+  - name: sample3
+    path: /path/to/sample1/collapsed
+    # You can keep adding more samples here...
+
+# Configuration for the SQANTI3 pipeline
+# SQANTI3 QC and Rescue
+input_gtf: scisoseq.mapped_transcripts.collapse.sorted.gff
+ref_gtf: gencode_v30.sorted.gtf # Combined GTF for both QC and Rescue
+ref_genome: GRCh38.p12.genome.fa # Combined genome for both QC and Rescue
+output_dir: test
+out_name: scisoseq3_sqanti3
+abundance: scisoseq.mapped_transcripts.collapse.abundance.txt
+tappAS: Homo_sapiens_GRCh38_Ensembl_86.gff3 # If you need to convert the annot.gtf to the annot.gff3, you should use the 'gffread' via 'module load gffread/0.12.7' on the Apollo server (gffread my_annotation.gtf -T -o my_annotation.gff3)
+
+# Optional short-read input
+short_reads: # Leave empty if not using short reads
+cage_peak: hg38.cage_peak_phase1and2combined_coord.bed
+polya_peak: 
+polya_motif: /net/nfs-irwrsrchnas01.coh.org/labs/Seq/PacBio/thkang/Pipelines/IsoSeq3_Sqanti3/supporting_files/mouse_and_human.polyA_motif.txt
+coverage: intropolis.v1.hg19_with_liftover_to_hg38.tsv.min_count_10.modified
+cpus: 1
+chunks: 1
+
+# SQANTI3 Filter ML
+# Machine Learning Filter Options
+sam:  # Leave this line empty or delete if not using SAM file
+run_ml_filter: true  # Set to true to run ML filter after QC
+percent_training: 0.8
+tp:  # Optional path to TP list
+tn:  # Optional path to TN list
+threshold: 0.7
+force_fsm_in: True  # Force FSM transcripts to be included
+remove_columns:  # Optional, columns to exclude from training
+intrapriming: 60
+filter_mono_exonic: True  # Set to true if you want to filter mono-exonic transcripts
+max_class_size: 3000
+intermediate_files: False  # Set to true to keep intermediate files
+version: False  # Set to true to display version of the tool
+
+# SQANTI3 Rescue Options
+run_rescue: true  # Set to true to run rescue after ML filter
+ref_classif: /net/nfs-irwrsrchnas01.coh.org/labs/Seq/PacBio/thkang/Pipelines/IsoSeq3_Sqanti3/scIsoSeq_Sqanti3_test/test/scisoseq3_sqanti3_classification.txt  # Reference classification file
+rescue_mono_exonic: fsm  # Options: none, fsm, all (default: fsm)
+mode: automatic  # Options: automatic, full
+randomforest: /net/nfs-irwrsrchnas01.coh.org/labs/Seq/PacBio/thkang/Pipelines/IsoSeq3_Sqanti3/scIsoSeq_Sqanti3_test/test/randomforest.RData  # Optional, path to the RandomForest RData file
+threshold: 0.7  # Machine learning probability threshold
