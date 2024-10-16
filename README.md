@@ -57,6 +57,7 @@ python sqanti3.py
 ### Note: This pipeline only includes the ML-based filter and rescue functionality. For rule-based filtering and rescue, refer to the official SQANTI3 documentation:
 
 'https://github.com/ConesaLab/SQANTI3/wiki/Running-SQANTI3-filter'
+
 'https://github.com/ConesaLab/SQANTI3/wiki/Running-SQANTI3-rescue'
 
 ## Supporting Files
