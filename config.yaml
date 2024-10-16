@@ -13,19 +13,19 @@ samples:
 
 # Configuration for the SQANTI3 pipeline
 # SQANTI3 QC and Rescue
-input_gtf: scisoseq.mapped_transcripts.collapse.sorted.gff
-ref_gtf: gencode_v30.sorted.gtf # Combined GTF for both QC and Rescue
-ref_genome: GRCh38.p12.genome.fa # Combined genome for both QC and Rescue
+input_gtf: collapse.sorted.gff
+ref_gtf: annot.sorted.gtf # Combined GTF for both QC and Rescue
+ref_genome: ref.genome.fa # Combined genome for both QC and Rescue
 output_dir: test
 out_name: scisoseq3_sqanti3
-abundance: scisoseq.mapped_transcripts.collapse.abundance.txt
-tappAS: Homo_sapiens_GRCh38_Ensembl_86.gff3 # If you need to convert the annot.gtf to the annot.gff3, you should use the 'gffread' via 'module load gffread/0.12.7' on the Apollo server (gffread my_annotation.gtf -T -o my_annotation.gff3)
+abundance: collapse.abundance.txt
+tappAS: annot.gff3 # If you need to convert the annot.gtf to the annot.gff3, you should use the 'gffread' via 'module load gffread/0.12.7' on the Apollo server (gffread my_annotation.gtf -T -o my_annotation.gff3)
 
 # Optional short-read input
 short_reads: # Leave empty if not using short reads
 cage_peak: hg38.cage_peak_phase1and2combined_coord.bed
 polya_peak: 
-polya_motif: /net/nfs-irwrsrchnas01.coh.org/labs/Seq/PacBio/thkang/Pipelines/IsoSeq3_Sqanti3/supporting_files/mouse_and_human.polyA_motif.txt
+polya_motif: mouse_and_human.polyA_motif.txt
 coverage: intropolis.v1.hg19_with_liftover_to_hg38.tsv.min_count_10.modified
 cpus: 1
 chunks: 1
@@ -48,8 +48,8 @@ version: False  # Set to true to display version of the tool
 
 # SQANTI3 Rescue Options
 run_rescue: true  # Set to true to run rescue after ML filter
-ref_classif: /net/nfs-irwrsrchnas01.coh.org/labs/Seq/PacBio/thkang/Pipelines/IsoSeq3_Sqanti3/scIsoSeq_Sqanti3_test/test/scisoseq3_sqanti3_classification.txt  # Reference classification file
+ref_classif: scisoseq3_sqanti3_classification.txt  # Reference classification file
 rescue_mono_exonic: fsm  # Options: none, fsm, all (default: fsm)
 mode: automatic  # Options: automatic, full
-randomforest: /net/nfs-irwrsrchnas01.coh.org/labs/Seq/PacBio/thkang/Pipelines/IsoSeq3_Sqanti3/scIsoSeq_Sqanti3_test/test/randomforest.RData  # Optional, path to the RandomForest RData file
+randomforest: randomforest.RData  # Requirement, path to the RandomForest RData file
 threshold: 0.7  # Machine learning probability threshold
