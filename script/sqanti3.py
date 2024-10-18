@@ -133,7 +133,7 @@ def run_sqanti3_rescue(config):
     run_command(sqanti3_rescue)
     logging.info("*** SQANTI3 Rescue Completed ***")
 
-# Main function
+# Main function to trigger SQANTI3
 if __name__ == "__main__":
     # Load configuration file
     config = load_config("config.yaml")
@@ -144,22 +144,24 @@ if __name__ == "__main__":
 
     # Check if there are chained jobs (before running SQANTI3-QC)
     chain_jobs_value = str(config.get('chain_jobs', 'no')).lower()
+    
     if chain_jobs_value == 'yes':
         logging.info("*** Chaining jobs enabled. Running chain.py script ***")
         # Run the chain.py script with the same config file to process chaining
         chain_command = f"python3 chain.py config.yaml"
         run_command(chain_command)
 
-        # After chaining, the input files should be updated in the config file
-        # Reload the updated config file to get the new input_gtf and abundance paths
-        config = load_config("config.yaml")
+        # Check if chaining outputs exist and update input files accordingly
+        chained_gtf = "all_samples.chained.gff"
+        chained_abundance = "all_samples.chained_count.txt"
 
-        # Set the input_gtf and abundance paths to the chained files
-        input_gtf = config.get("input_gtf", "all_samples.chained.gtf")
-        abundance = config.get("abundance", "all_samples.chained_count.tsv")
-
-        logging.info(f"Using chained GTF: {input_gtf}")
-        logging.info(f"Using chained abundance file: {abundance}")
+        if os.path.exists(chained_gtf) and os.path.exists(chained_abundance):
+            logging.info(f"Chaining completed, using chained files: {chained_gtf} and {chained_abundance}")
+            input_gtf = chained_gtf
+            abundance = chained_abundance
+        else:
+            logging.error("Chaining output files not found! Ensure chaining ran successfully.")
+            sys.exit(1)
     else:
         logging.info("*** Skipping chaining as per user's choice ***")
 
