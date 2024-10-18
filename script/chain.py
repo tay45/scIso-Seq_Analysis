@@ -1,120 +1,67 @@
 #!/usr/bin/python
 
 import os
-import subprocess
 import sys
-import logging
 import yaml
+import glob
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# Function to run subprocess commands with error checking
-def run_command(command):
-    try:
-        logging.info(f"Running command: {command}")
-        subprocess.run(command, shell=True, check=True)
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Command failed: {e}")
+# Function to check for files by pattern
+def find_file_by_pattern(directory, pattern):
+    files = glob.glob(os.path.join(directory, pattern))
+    if files:
+        return os.path.basename(files[0])  # Return only the file name
+    else:
+        print(f"File matching pattern '{pattern}' not found in {directory}. Please check the file location.")
         sys.exit(1)
 
-# Function to check if a file exists
-def check_file(path, is_required=True):
-    if path and not os.path.isfile(path):
-        if is_required:
-            logging.error(f"File {path} doesn't exist. Exiting...")
-            sys.exit(1)
-        else:
-            logging.warning(f"Optional file {path} is missing. Proceeding without it.")
-    elif not path and is_required:
-        logging.error(f"Required file missing. Exiting...")
-        sys.exit(1)
-
-# Load configuration from YAML file
+# Load the configuration from the config.yaml file
 def load_config(config_file):
     with open(config_file, 'r') as f:
         return yaml.safe_load(f)
 
-# Save updated configuration to YAML file
-def save_config(config_file, config_data):
-    with open(config_file, 'w') as f:
-        yaml.safe_dump(config_data, f)
-
-# Function to create the sample.config file for cDNA Cupcake's chain_samples.py
-def create_sample_config(samples, output_dir):
-    sample_config_path = os.path.join(output_dir, "sample.config")
-    with open(sample_config_path, 'w') as config:
-        # Write each sample's collapsed file in the format SAMPLE=<sample_name>;<path>
-        for sample in samples:
-            config.write(f"SAMPLE={sample['name']};{sample['collapsed']}\n")
-        
-        # Append fixed configuration values for chaining
-        config.write("\nGROUP_FILENAME=collapsed.group.txt\n")
-        config.write("GFF_FILENAME=collapsed.gff\n")
-        config.write("COUNT_FILENAME=collapsed.abundance.txt\n")
+# Generate the sample.config file based on config.yaml
+def create_sample_config(samples):
+    sample_config_path = "sample.config"
     
-    logging.info(f"Configuration file created: {sample_config_path}")
+    with open(sample_config_path, 'w') as config:
+        for sample in samples:
+            # Find the required files by pattern in each sample directory
+            collapsed_group = find_file_by_pattern(sample['path'], '*.group.txt')
+            collapsed_gff = find_file_by_pattern(sample['path'], '*.gff')
+            collapsed_abundance = find_file_by_pattern(sample['path'], '*.abundance.txt')
+            
+            # Write the SAMPLE lines with the sample name and path
+            config.write(f"SAMPLE={sample['name']};{sample['path']}\n")
+        
+        # Write the filenames (without paths) to the config file
+        config.write(f"GROUP_FILENAME={collapsed_group}\n")
+        config.write(f"GFF_FILENAME={collapsed_gff}\n")
+        config.write(f"COUNT_FILENAME={collapsed_abundance}\n")
+        
+        # Optionally include FASTQ_FILENAME if a fastq file exists in the directory
+        fastq_file = glob.glob(os.path.join(sample['path'], '*.fastq'))
+        if fastq_file:
+            config.write(f"FASTQ_FILENAME={os.path.basename(fastq_file[0])}\n")
+
+    print(f"Configuration file created: {sample_config_path}")
     return sample_config_path
 
-# Main function for chaining
-def chain_samples(config_file, config):
-    # Get chaining-related configurations
-    chain_enabled = config.get("chain_jobs", "no").lower()
-    if chain_enabled != "yes":
-        logging.info("*** Chaining is disabled in the configuration. Skipping chaining process. ***")
-        return config  # Return config as is if no chaining is needed
-
-    # Get output directory and sample output filenames
-    output_dir = config.get("output_dir", "output")
-    input_gtf = config.get("input_gtf", "all_samples.chained.gtf")
-    abundance = config.get("abundance", "all_samples.chained_count.tsv")
-
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    # Read sample information from the configuration file
+# Main function to generate the config file and run chain_samples.py
+def main():
+    config = load_config("config.yaml")
     samples = config.get("samples", [])
+
     if not samples:
-        logging.error("No samples found in configuration. Please specify samples under 'samples' in config.yaml.")
+        print("No samples found in configuration. Please specify samples under 'samples' in config.yaml.")
         sys.exit(1)
 
-    # Create the sample configuration file
-    sample_config = create_sample_config(samples, output_dir)
+    # Create the sample config file
+    sample_config = create_sample_config(samples)
+    
+    # Run the chain_samples.py script with the generated sample.config
+    chain_command = f"chain_samples.py {sample_config} count_fl --dun-merge-5-shorter"
+    print(f"Executing command: {chain_command}")
+    os.system(chain_command)
 
-    # Verify the generated config file exists
-    check_file(sample_config)
-
-    # Run the chain command using the generated sample configuration file
-    # Save output to the `input_gtf` and `abundance` filenames from the config
-    chain_command = f"chain_samples.py {sample_config} count_fl --output-gtf {input_gtf} --output-abundance {abundance} --dun-merge-5-shorter"
-    logging.info(f"Executing chaining command: {chain_command}")
-    run_command(chain_command)
-
-    # List the output files generated by the chaining process
-    logging.info("Listing chained output files...")
-    run_command(f"ls {input_gtf} {abundance}")
-
-    # Save the updated config (with the chained file names if necessary)
-    save_config(config_file, config)
-
-    logging.info("*** Chaining process completed ***")
-    return config  # Return the updated config
-
-
-# Main entry point of the script
 if __name__ == "__main__":
-    # Load configuration file (ensure it is passed as an argument)
-    if len(sys.argv) != 2:
-        logging.error("Usage: python chain.py <config.yaml>")
-        sys.exit(1)
-
-    config_file = sys.argv[1]
-
-    # Load configuration settings
-    config = load_config(config_file)
-
-    # Start the chaining process and update the config
-    updated_config = chain_samples(config_file, config)
-
-    # Inform user to run the SQANTI3 script next
-    logging.info("*** Run the SQANTI3 script using the updated config file. ***")
+    main()
