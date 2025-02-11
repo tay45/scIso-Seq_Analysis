@@ -41,7 +41,7 @@ python scisoseq3.py \
 --barcodes_gz 10X_cell_barcodes.txt.gz \
 --design 16B-10U-10X-T (scisoseq_design_5p) or T-12U-16B (scisoseq_design_3p)\
 --reference_fasta ref.genome.fa \
---annot.gtf \
+--annotation_gtf ref.annot.gtf \
 -j <number of threads>
 
 The input must be HiFi reads (ccs.bam, QV > 20).
